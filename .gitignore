@@ -1,0 +1,15 @@
+# XcodeGen generates the project from project.yml
+*.xcodeproj/
+
+# Build
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# macOS
+.DS_Store
+
+# Secrets
+.reclaim-token
+.env
