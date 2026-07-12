@@ -8,6 +8,7 @@ struct TaskListView: View {
     @State private var showCreate = false
     @State private var showSettings = false
     @State private var pendingDeleteIDs: [Int]?
+    @State private var showReindexConfirm = false
     @AppStorage("wrapTaskTitles") private var wrapTitles = false
 
     private var selectedIDs: [Int] { Array(selection) }
@@ -52,6 +53,10 @@ struct TaskListView: View {
                 }
                 Button("Cancel", role: .cancel) { pendingDeleteIDs = nil }
             } message: { Text("This permanently deletes from Reclaim and cannot be undone.") }
+            .confirmationDialog("Reprioritize all tasks by due date?", isPresented: $showReindexConfirm, titleVisibility: .visible) {
+                Button("Auto-Prioritize") { Task { await vm.autoPrioritizeByDue() } }
+                Button("Cancel", role: .cancel) {}
+            } message: { Text("Reorders your whole task list so sooner due dates come first.") }
             .onChange(of: editMode) { _, m in if !m.isEditing { selection.removeAll() } }
             .overlay { if vm.filteredTasks.isEmpty { emptyState } }
             .overlay { if vm.isBusy { busyHUD } }
@@ -137,6 +142,8 @@ struct TaskListView: View {
                 }
                 Toggle(isOn: $wrapTitles) { Label("Wrap long titles", systemImage: "text.alignleft") }
                 Divider()
+                Button { showReindexConfirm = true } label: { Label("Auto-Prioritize by Due", systemImage: "arrow.up.arrow.down") }
+                Divider()
                 if let user = vm.user { Text(user.displayName) }
                 Button { showSettings = true } label: { Label("Settings", systemImage: "gearshape") }
             } label: { Image(systemName: "ellipsis.circle") }
@@ -158,7 +165,13 @@ struct TaskRow: View {
             }
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
+                    if task.statusEnum == .inProgress {
+                        Image(systemName: "record.circle").font(.caption2).foregroundStyle(.green)
+                    }
                     if task.onDeck == true { Image(systemName: "bolt.fill").font(.caption2).foregroundStyle(.yellow) }
+                    if task.atRisk == true && !task.isFinished {
+                        Image(systemName: "exclamationmark.triangle.fill").font(.caption2).foregroundStyle(.orange)
+                    }
                     Text(task.displayTitle).lineLimit(wrapTitles ? nil : 1)
                         .strikethrough(task.isFinished, color: .secondary)
                         .foregroundStyle(task.isFinished ? .secondary : .primary)

@@ -43,6 +43,15 @@ struct TaskEditView: View {
                 if task.isFinished {
                     AsyncButton(action: { await vm.markIncomplete(id: task.id); dismiss() }) { Text("Reopen") }
                 } else {
+                    if task.statusEnum == .inProgress {
+                        AsyncButton(action: { await vm.stopTask(id: task.id); dismiss() }) {
+                            Label("Stop Working", systemImage: "stop.circle")
+                        }
+                    } else {
+                        AsyncButton(action: { await vm.startTask(id: task.id); dismiss() }) {
+                            Label("Start Working", systemImage: "play.circle")
+                        }
+                    }
                     AsyncButton(action: { await vm.markComplete(id: task.id); dismiss() }) { Text("Mark Complete") }
                 }
             }
