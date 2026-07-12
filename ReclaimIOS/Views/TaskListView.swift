@@ -81,12 +81,12 @@ struct TaskListView: View {
             }
         }
         .listStyle(.plain)
+        .navigationDestination(for: ReclaimTask.self) { TaskEditView(vm: vm, task: $0) }
         .refreshable { await vm.loadTasks() }
     }
 
     private func row(_ task: ReclaimTask) -> some View {
-        NavigationLink { TaskEditView(vm: vm, task: task) } label: { TaskRow(task: task) }
-            .tag(task.id)
+        NavigationLink(value: task) { TaskRow(task: task) }
             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                 if task.isFinished {
                     Button { Task { await vm.markIncomplete(id: task.id) } } label: { Label("Reopen", systemImage: "arrow.uturn.backward") }.tint(.blue)
@@ -112,7 +112,11 @@ struct TaskListView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) { EditButton() }
+        ToolbarItem(placement: .topBarLeading) {
+            Button(editMode.isEditing ? "Done" : "Select") {
+                withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+            }
+        }
         ToolbarItem(placement: .topBarTrailing) {
             Button { showCreate = true } label: { Image(systemName: "plus") }
         }
