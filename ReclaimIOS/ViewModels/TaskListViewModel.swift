@@ -236,6 +236,7 @@ final class TaskListViewModel {
             errorMessage = nil
             currentEvent = (try? await client.currentMoment())?.event
             nextEvent = (try? await client.nextMoment())?.event
+            LiveActivityManager.sync(current: currentEvent)
             publishSnapshot()
         } catch let apiError as ReclaimAPIError {
             // Always act on a dead session, even during a silent background refresh.

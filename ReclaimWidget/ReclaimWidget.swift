@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import ActivityKit
 import ReclaimKit
 
 // MARK: - Timeline
@@ -67,7 +68,12 @@ struct ReclaimWidgetEntryView: View {
             } else {
                 ForEach(entry.tasks.prefix(limit)) { task in
                     HStack(spacing: 6) {
-                        Circle().fill(priorityColor(task.priority)).frame(width: 6, height: 6)
+                        Button(intent: CompleteTaskIntent(taskId: task.id)) {
+                            Image(systemName: "circle")
+                                .font(.caption2)
+                                .foregroundStyle(priorityColor(task.priority))
+                        }
+                        .buttonStyle(.plain)
                         Text(task.title).font(.caption2).lineLimit(1)
                         Spacer(minLength: 0)
                         if family != .systemSmall, let due = task.dueDate {
@@ -97,7 +103,64 @@ struct ReclaimWidget: Widget {
     }
 }
 
+// MARK: - Live Activity (focus block)
+
+private func liveActivityPriorityColor(_ raw: String?) -> Color {
+    switch raw {
+    case "P1": return .red
+    case "P2": return .orange
+    case "P3": return .blue
+    default: return .secondary
+    }
+}
+
+struct FocusBlockLiveActivity: Widget {
+    var body: some WidgetConfiguration {
+        ActivityConfiguration(for: FocusBlockAttributes.self) { context in
+            HStack(spacing: 12) {
+                Image(systemName: "bolt.fill").foregroundStyle(.yellow)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(context.state.title).font(.headline).lineLimit(1)
+                    (Text("until ") + Text(context.state.endDate, style: .time))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(context.state.endDate, style: .timer)
+                    .monospacedDigit().font(.title3.weight(.bold))
+                    .multilineTextAlignment(.trailing).frame(width: 68)
+            }
+            .padding()
+            .activityBackgroundTint(Color.black.opacity(0.3))
+            .activitySystemActionForegroundColor(.white)
+        } dynamicIsland: { context in
+            DynamicIsland {
+                DynamicIslandExpandedRegion(.leading) {
+                    Label("Focus", systemImage: "bolt.fill")
+                        .font(.caption).foregroundStyle(.yellow)
+                }
+                DynamicIslandExpandedRegion(.trailing) {
+                    Text(context.state.endDate, style: .timer)
+                        .monospacedDigit().frame(width: 62).multilineTextAlignment(.trailing)
+                }
+                DynamicIslandExpandedRegion(.bottom) {
+                    Text(context.state.title).font(.headline).lineLimit(1)
+                }
+            } compactLeading: {
+                Image(systemName: "bolt.fill").foregroundStyle(.yellow)
+            } compactTrailing: {
+                Text(context.state.endDate, style: .timer)
+                    .monospacedDigit().frame(width: 44).multilineTextAlignment(.trailing)
+            } minimal: {
+                Image(systemName: "bolt.fill").foregroundStyle(.yellow)
+            }
+        }
+    }
+}
+
 @main
 struct ReclaimWidgetBundle: WidgetBundle {
-    var body: some Widget { ReclaimWidget() }
+    var body: some Widget {
+        ReclaimWidget()
+        FocusBlockLiveActivity()
+    }
 }
