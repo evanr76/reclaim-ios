@@ -44,7 +44,12 @@ public enum KeychainStore {
             var insert = query
             insert[kSecValueData as String] = data
             insert[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-            return SecItemAdd(insert as CFDictionary, nil) == errSecSuccess
+            let addStatus = SecItemAdd(insert as CFDictionary, nil)
+            if addStatus == errSecSuccess { return true }
+            // Lost a race with a concurrent save — the item now exists; update it.
+            if addStatus == errSecDuplicateItem {
+                return SecItemUpdate(query as CFDictionary, attributes as CFDictionary) == errSecSuccess
+            }
         }
         return false
     }

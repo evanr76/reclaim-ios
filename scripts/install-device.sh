@@ -19,9 +19,17 @@ xcodebuild -project ReclaimIOS.xcodeproj -scheme ReclaimIOS \
   -derivedDataPath build build >/dev/null
 APP="build/Build/Products/Debug-iphoneos/ReclaimIOS.app"
 
-DEVICE="${1:-$(xcrun devicectl list devices 2>/dev/null \
-  | grep -i available | grep -i iphone \
-  | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}' | head -1)}"
+if [ -n "${1:-}" ]; then
+  DEVICE="$1"
+else
+  # Capture first (|| true), then parse via here-string so no pipeline can
+  # SIGPIPE-fail under `set -o pipefail` before the empty-DEVICE check.
+  DEVICE_LIST="$(xcrun devicectl list devices 2>/dev/null || true)"
+  DEVICE="$(awk 'tolower($0) ~ /available/ && tolower($0) ~ /iphone/ {
+      for (i = 1; i <= NF; i++)
+        if ($i ~ /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/) { print $i; exit }
+    }' <<< "${DEVICE_LIST}")"
+fi
 if [ -z "${DEVICE}" ]; then
   echo "No available iPhone found. Connect/unlock the device (or pass its UDID)." >&2
   exit 1
@@ -29,8 +37,9 @@ fi
 
 echo "[3/4] Installing to ${DEVICE} (device must be unlocked)..."
 xcrun devicectl device install app --device "${DEVICE}" "${APP}"
+rm -rf build
 
 echo "[4/4] Launching..."
-xcrun devicectl device process launch --device "${DEVICE}" io.github.evanr76.reclaimios || true
-rm -rf build
+# No `|| true`: a failed launch should surface (nonzero exit), not print "Done".
+xcrun devicectl device process launch --device "${DEVICE}" io.github.evanr76.reclaimios
 echo "Done."

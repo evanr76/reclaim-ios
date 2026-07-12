@@ -41,9 +41,10 @@ xcodegen generate
 open ReclaimIOS.xcodeproj      # then pick a Simulator and ⌘R
 ```
 
-Signing to run on a device: select your team on all three targets
-(app, widget, ReclaimKit) — automatic signing will provision the App Group
-`group.io.github.evanr76.reclaimios`.
+Signing to run on a device: select your team on the **app and widget** targets
+(the `ReclaimKit` static library isn't code-signed) — automatic signing
+provisions the App Group `group.io.github.evanr76.reclaimios`, which is
+configured in the app and widget entitlements.
 
 ### Simulator quick-test with a token
 
@@ -60,7 +61,8 @@ SIMCTL_CHILD_RECLAIM_TOKEN=<your-key> xcrun simctl launch --console booted io.gi
 reclaim-ios/
 ├── project.yml               XcodeGen spec (app + widget + ReclaimKit)
 ├── ReclaimKit/               Shared model + API client (static library)
-│   ├── ReclaimTask/User/Enums.swift, ReclaimAPIClient.swift, KeychainStore.swift
+│   ├── ReclaimTask.swift, User.swift, Enums.swift
+│   ├── ReclaimAPIClient.swift, KeychainStore.swift
 │   └── SharedStore.swift     App Group snapshot for the widget
 ├── ReclaimIOS/               App target
 │   ├── ReclaimIOSApp.swift, ViewModels/, Views/, AppIntents/

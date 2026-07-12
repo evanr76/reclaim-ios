@@ -18,8 +18,8 @@ bulk operations, create/edit, Siri App Intent, and a WidgetKit widget. See
 
 ## Conventions
 
-- **No third-party deps** beyond XcodeGen (build tool). Pure SwiftUI + Foundation
-  + WidgetKit + AppIntents + ServiceManagement(macOS only).
+- **No third-party deps** beyond XcodeGen (build tool). System frameworks only:
+  SwiftUI, Foundation, Security (Keychain), Network, WidgetKit, AppIntents.
 - **`ReclaimKit` is a self-contained COPY** of the macOS app's model/API layer
   (`ReclaimTask`, `User`, `Enums`, `ReclaimAPIClient`, `KeychainStore`) — the user
   chose independence from the published macOS repo over a shared package. Keep the

@@ -73,8 +73,8 @@ final class TaskListViewModel {
             client = ReclaimAPIClient(token: token)
             isConfigured = true
         }
-        #if DEBUG
-        // Simulator convenience: inject a token via the RECLAIM_TOKEN env var.
+        #if DEBUG && targetEnvironment(simulator)
+        // Simulator-only convenience: inject a token via the RECLAIM_TOKEN env var.
         if client == nil, let env = ProcessInfo.processInfo.environment["RECLAIM_TOKEN"], !env.isEmpty {
             client = ReclaimAPIClient(token: env)
             isConfigured = true
@@ -232,9 +232,14 @@ final class TaskListViewModel {
             errorMessage = nil
             publishSnapshot()
         } catch let apiError as ReclaimAPIError {
+            // Always act on a dead session, even during a silent background refresh.
+            if case .unauthorized = apiError {
+                signOut()
+                if !silent { errorMessage = apiError.localizedDescription }
+                return
+            }
             guard !silent else { return }
-            if case .unauthorized = apiError { signOut(); errorMessage = apiError.localizedDescription }
-            else { errorMessage = apiError.localizedDescription }
+            errorMessage = apiError.localizedDescription
         } catch {
             if !silent { errorMessage = error.localizedDescription }
         }
