@@ -54,6 +54,21 @@ SIMCTL_CHILD_RECLAIM_TOKEN=<key> xcrun simctl launch --console booted io.github.
 A `#if DEBUG` fallback in `TaskListViewModel.init` reads `RECLAIM_TOKEN` from the
 environment (simulator testing only).
 
+## Reclaim API scope (personal key)
+
+Probed 2026-07-12. The personal API key is **scope-limited** vs the web session:
+- ✅ `GET/POST /api/tasks*`, `GET /api/timeschemes`, `GET /api/moment`,
+  `GET /api/moment/next`, planner **action** POSTs that already work
+  (done/prioritize/snooze/onDeck-patch).
+- ❌ **403**: `?instances=true`, `/api/events`, `/api/planner/*` reads,
+  `/api/habits`, `/api/daily-habits`, `/api/hours`, `/api/users/current/settings`,
+  `/api/moment/current`.
+
+Consequences: no full calendar / per-task scheduled times / Today timeline, and
+**habits are unavailable**. The "Now & Next" banner uses `/api/moment` (current)
++ `/api/moment/next` (next) — the only scheduling data we can read. Re-probe
+start/stop + log-work + reindex-by-due before building Phase 3.
+
 ## Known gaps / backlog
 
 - Widget only reflects data as of the app's last refresh (App Group snapshot).

@@ -15,6 +15,8 @@ struct TaskListView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                NowNextBanner(current: vm.currentEvent, next: vm.nextEvent)
+
                 Picker("Filter", selection: $vm.filter) {
                     ForEach(TaskFilter.allCases) { Text($0.rawValue).tag($0) }
                 }
