@@ -17,7 +17,7 @@ struct BulkBar: View {
 
             Spacer()
 
-            Button { run { await vm.bulkComplete(ids: selectedIDs) } } label: {
+            AsyncButton(action: { await vm.bulkComplete(ids: selectedIDs); onDone() }) {
                 Image(systemName: "checkmark.circle")
             }
             .help("Complete")

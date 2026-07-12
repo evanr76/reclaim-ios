@@ -41,9 +41,9 @@ struct TaskEditView: View {
             }
             Section {
                 if task.isFinished {
-                    Button("Reopen") { Task { await vm.markIncomplete(id: task.id); dismiss() } }
+                    AsyncButton(action: { await vm.markIncomplete(id: task.id); dismiss() }) { Text("Reopen") }
                 } else {
-                    Button("Mark Complete") { Task { await vm.markComplete(id: task.id); dismiss() } }
+                    AsyncButton(action: { await vm.markComplete(id: task.id); dismiss() }) { Text("Mark Complete") }
                 }
             }
         }
@@ -51,13 +51,13 @@ struct TaskEditView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { save() }
+                AsyncButton(action: { await performSave() }) { Text("Save") }
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
     }
 
-    private func save() {
+    private func performSave() async {
         var patch: [String: Any] = [
             "title": title.trimmingCharacters(in: .whitespacesAndNewlines),
             "notes": notes,
@@ -65,6 +65,7 @@ struct TaskEditView: View {
             "timeChunksRequired": Int((durationHours * 4).rounded()),
         ]
         patch["due"] = hasDue ? ReclaimAPIClient.isoString(due) : NSNull()
-        Task { await vm.updateTask(id: task.id, patch: patch); dismiss() }
+        await vm.updateTask(id: task.id, patch: patch)
+        dismiss()
     }
 }

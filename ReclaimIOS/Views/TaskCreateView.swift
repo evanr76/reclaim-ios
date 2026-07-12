@@ -32,10 +32,11 @@ struct TaskCreateView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
+                    AsyncButton(action: {
                         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
-                        Task { await vm.createTask(title: t, priority: priority, durationHours: durationHours, due: hasDue ? due : nil); dismiss() }
-                    }
+                        await vm.createTask(title: t, priority: priority, durationHours: durationHours, due: hasDue ? due : nil)
+                        dismiss()
+                    }) { Text("Add") }
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
