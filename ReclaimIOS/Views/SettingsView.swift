@@ -20,6 +20,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var newToken = ""
     @AppStorage("refreshIntervalMinutes") private var refreshIntervalMinutes = 60
+    @AppStorage("appearance") private var appearanceRaw = AppAppearance.system.rawValue
 
     var body: some View {
         NavigationStack {
@@ -34,6 +35,9 @@ struct SettingsView: View {
                 }
 
                 Section("General") {
+                    Picker("Appearance", selection: $appearanceRaw) {
+                        ForEach(AppAppearance.allCases) { Text($0.label).tag($0.rawValue) }
+                    }
                     Picker("Refresh", selection: $refreshIntervalMinutes) {
                         ForEach(RefreshInterval.allCases) { Text($0.label).tag($0.rawValue) }
                     }
