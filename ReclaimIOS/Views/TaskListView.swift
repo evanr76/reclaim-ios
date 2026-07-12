@@ -8,6 +8,7 @@ struct TaskListView: View {
     @State private var showCreate = false
     @State private var showSettings = false
     @State private var pendingDeleteIDs: [Int]?
+    @AppStorage("wrapTaskTitles") private var wrapTitles = false
 
     private var selectedIDs: [Int] { Array(selection) }
 
@@ -51,7 +52,23 @@ struct TaskListView: View {
             } message: { Text("This permanently deletes from Reclaim and cannot be undone.") }
             .onChange(of: editMode) { _, m in if !m.isEditing { selection.removeAll() } }
             .overlay { if vm.filteredTasks.isEmpty { emptyState } }
+            .overlay { if vm.isBusy { busyHUD } }
         }
+    }
+
+    /// Centered spinner shown while a mutating API call is in flight, so button
+    /// taps register visibly instead of appearing to hang.
+    private var busyHUD: some View {
+        ZStack {
+            Color.black.opacity(0.06).ignoresSafeArea()
+            ProgressView()
+                .controlSize(.large)
+                .padding(28)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
+                .shadow(radius: 10)
+        }
+        .transition(.opacity)
+        .allowsHitTesting(true)   // swallow taps so an action can't be double-fired
     }
 
     private var list: some View {
@@ -102,6 +119,18 @@ struct TaskListView: View {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 Button { Task { await vm.loadTasks() } } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+                Divider()
+                Picker("Sort By", selection: $vm.sortOption) {
+                    ForEach(SortOption.allCases) { Label($0.rawValue, systemImage: $0.systemImage).tag($0) }
+                }
+                Button {
+                    vm.sortAscending.toggle()
+                } label: {
+                    Label(vm.sortAscending ? "Ascending" : "Descending",
+                          systemImage: vm.sortAscending ? "arrow.up" : "arrow.down")
+                }
+                Toggle(isOn: $wrapTitles) { Label("Wrap long titles", systemImage: "text.alignleft") }
+                Divider()
                 if let user = vm.user { Text(user.displayName) }
                 Button { showSettings = true } label: { Label("Settings", systemImage: "gearshape") }
             } label: { Image(systemName: "ellipsis.circle") }
@@ -112,8 +141,9 @@ struct TaskListView: View {
 /// One task row.
 struct TaskRow: View {
     let task: ReclaimTask
+    @AppStorage("wrapTaskTitles") private var wrapTitles = false
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(alignment: wrapTitles ? .top : .center, spacing: 10) {
             if let p = task.priorityEnum {
                 Text(p.short).font(.caption2.bold())
                     .padding(.horizontal, 5).padding(.vertical, 2)
@@ -123,7 +153,7 @@ struct TaskRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     if task.onDeck == true { Image(systemName: "bolt.fill").font(.caption2).foregroundStyle(.yellow) }
-                    Text(task.displayTitle).lineLimit(1)
+                    Text(task.displayTitle).lineLimit(wrapTitles ? nil : 1)
                         .strikethrough(task.isFinished, color: .secondary)
                         .foregroundStyle(task.isFinished ? .secondary : .primary)
                 }

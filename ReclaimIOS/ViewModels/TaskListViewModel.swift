@@ -22,6 +22,24 @@ enum TaskFilter: String, CaseIterable, Identifiable {
     }
 }
 
+/// How the task list is ordered.
+enum SortOption: String, CaseIterable, Identifiable {
+    case due = "Due Date"
+    case priority = "Priority"
+    case created = "Created"
+    case title = "Title"
+
+    var id: String { rawValue }
+    var systemImage: String {
+        switch self {
+        case .due: return "calendar"
+        case .priority: return "flag"
+        case .created: return "clock"
+        case .title: return "textformat"
+        }
+    }
+}
+
 /// App state: auth/token, the task list, filters, and every mutating operation.
 @MainActor
 @Observable
@@ -35,6 +53,12 @@ final class TaskListViewModel {
 
     var filter: TaskFilter = .active
     var searchText: String = ""
+    var sortOption: SortOption = .due {
+        didSet { UserDefaults.standard.set(sortOption.rawValue, forKey: "sortOption") }
+    }
+    var sortAscending: Bool = true {
+        didSet { UserDefaults.standard.set(sortAscending, forKey: "sortAscending") }
+    }
     private(set) var isLoading = false
     private(set) var isBusy = false
     var errorMessage: String?
@@ -67,6 +91,8 @@ final class TaskListViewModel {
         pathMonitor.start(queue: DispatchQueue.global(qos: .utility))
         let stored = UserDefaults.standard.object(forKey: "refreshIntervalMinutes") as? Int ?? 60
         configureAutoRefresh(intervalMinutes: stored)
+        if let raw = UserDefaults.standard.string(forKey: "sortOption"), let s = SortOption(rawValue: raw) { sortOption = s }
+        sortAscending = UserDefaults.standard.object(forKey: "sortAscending") as? Bool ?? true
     }
 
     func configureAutoRefresh(intervalMinutes: Int) {
@@ -95,7 +121,26 @@ final class TaskListViewModel {
         let searched = query.isEmpty ? base : base.filter {
             $0.displayTitle.lowercased().contains(query) || ($0.notes?.lowercased().contains(query) ?? false)
         }
-        return searched.sorted(by: Self.defaultSort)
+        return sorted(searched)
+    }
+
+    /// Apply the user's chosen sort option + direction.
+    func sorted(_ tasks: [ReclaimTask]) -> [ReclaimTask] {
+        let base: [ReclaimTask]
+        switch sortOption {
+        case .due:
+            base = tasks.sorted { $0.sortDue != $1.sortDue ? $0.sortDue < $1.sortDue : $0.id < $1.id }
+        case .priority:
+            base = tasks.sorted {
+                let pa = $0.priorityEnum ?? .p3, pb = $1.priorityEnum ?? .p3
+                return pa != pb ? pa < pb : $0.sortDue < $1.sortDue
+            }
+        case .created:
+            base = tasks.sorted { $0.sortCreated != $1.sortCreated ? $0.sortCreated < $1.sortCreated : $0.id < $1.id }
+        case .title:
+            base = tasks.sorted { $0.displayTitle.localizedCaseInsensitiveCompare($1.displayTitle) == .orderedAscending }
+        }
+        return sortAscending ? base : base.reversed()
     }
 
     var upNextTasks: [ReclaimTask] { filteredTasks.filter { $0.onDeck == true } }
