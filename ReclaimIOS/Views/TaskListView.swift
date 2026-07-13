@@ -146,6 +146,9 @@ struct TaskListView: View {
                 Divider()
                 if let user = vm.user { Text(user.displayName) }
                 Button { showSettings = true } label: { Label("Settings", systemImage: "gearshape") }
+                Divider()
+                Text("Build \(BuildInfo.label)")
+                    .font(.footnote)
             } label: { Image(systemName: "ellipsis.circle") }
         }
     }
