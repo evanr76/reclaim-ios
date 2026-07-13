@@ -55,6 +55,9 @@ final class TaskListViewModel {
     private(set) var currentEvent: MomentEvent?
     private(set) var nextEvent: MomentEvent?
 
+    /// Task-capable time schemes (custom hours) for the edit pickers.
+    private(set) var timeSchemes: [TimeScheme] = []
+
     var filter: TaskFilter = .active
     var searchText: String = ""
     var sortOption: SortOption = .due {
@@ -236,6 +239,9 @@ final class TaskListViewModel {
             errorMessage = nil
             currentEvent = (try? await client.currentMoment())?.event
             nextEvent = (try? await client.nextMoment())?.event
+            if timeSchemes.isEmpty {
+                timeSchemes = ((try? await client.fetchTimeSchemes()) ?? []).filter { $0.supportsTasks }
+            }
             LiveActivityManager.sync(current: currentEvent)
             publishSnapshot()
         } catch let apiError as ReclaimAPIError {
