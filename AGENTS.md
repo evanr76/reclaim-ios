@@ -69,6 +69,22 @@ Consequences: no full calendar / per-task scheduled times / Today timeline, and
 + `/api/moment/next` (next) — the only scheduling data we can read. Re-probe
 start/stop + log-work + reindex-by-due before building Phase 3.
 
+## Apple Watch app (ReclaimWatch)
+
+- watchOS target (single, modern) embedded in the iOS app; compiles the shared
+  `ReclaimKit` sources directly (NOT as a module — watch files must not
+  `import ReclaimKit`). iOS-only bits (ActivityKit) are `#if`-guarded out.
+- **Token bridge:** iPhone pushes the API token to the watch via
+  `WCSession.updateApplicationContext(["reclaimToken": …])` (PhoneConnectivity);
+  the watch stores it in its own Keychain (WatchModel/WCSessionDelegate) and
+  fetches Up Next tasks directly from the API. Sign-out on the phone clears it.
+- **Build requirement:** a watch-embedding scheme won't build without the
+  matching **watchOS simulator runtime** installed (`xcodebuild -downloadPlatform
+  watchOS`), even for device builds. `scripts/install-device.sh` (generic iOS)
+  embeds the watch app; it auto-installs to a paired watch via the Watch app.
+- Verified in a watchOS simulator with the `#if DEBUG && targetEnvironment(simulator)`
+  `RECLAIM_TOKEN` env fallback in WatchModel. Complication is deferred.
+
 ## Known gaps / backlog
 
 - Widget only reflects data as of the app's last refresh (App Group snapshot).

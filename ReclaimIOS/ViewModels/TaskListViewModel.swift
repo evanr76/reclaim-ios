@@ -205,6 +205,7 @@ final class TaskListViewModel {
             isConfigured = true
             errorMessage = nil
             statusMessage = "Connected as \(me.displayName)."
+            PhoneConnectivity.shared.syncToken()
             await loadTasks()
         } catch {
             errorMessage = (error as? ReclaimAPIError)?.localizedDescription ?? error.localizedDescription
@@ -219,6 +220,7 @@ final class TaskListViewModel {
         allTasks = []
         lastRefreshed = nil
         publishSnapshot()
+        PhoneConnectivity.shared.syncToken()
         statusMessage = "Signed out."
     }
 

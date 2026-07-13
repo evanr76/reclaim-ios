@@ -16,6 +16,7 @@ struct ContentView: View {
         }
         .preferredColorScheme(AppAppearance(rawValue: appearanceRaw)?.colorScheme)
         .task {
+            PhoneConnectivity.shared.start()
             if vm.isConfigured && vm.allTasks.isEmpty { await vm.loadTasks() }
         }
         .onChange(of: scenePhase) { _, phase in

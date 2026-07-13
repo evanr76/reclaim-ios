@@ -32,6 +32,8 @@ targets:
     dependencies:
       - target: ReclaimKit
       - target: ReclaimWidget
+      - target: ReclaimWatch
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.github.evanr76.reclaimios
@@ -60,3 +62,18 @@ targets:
         CFBundleDisplayName: Reclaim
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
+  # watchOS companion app (single-target, modern). Compiles the shared ReclaimKit
+  # sources directly (guarded #if for iOS-only bits like ActivityKit).
+  ReclaimWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources: [ReclaimWatch, ReclaimKit]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.evanr76.reclaimios.watchkitapp
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Reclaim
+        INFOPLIST_KEY_WKApplication: YES
+        INFOPLIST_KEY_WKCompanionAppBundleIdentifier: io.github.evanr76.reclaimios
