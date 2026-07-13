@@ -127,7 +127,7 @@ struct FocusBlockLiveActivity: Widget {
                 Spacer()
                 Text(context.state.endDate, style: .timer)
                     .monospacedDigit().font(.title3.weight(.bold))
-                    .multilineTextAlignment(.trailing).frame(width: 68)
+                    .lineLimit(1).fixedSize()
             }
             .padding()
             .activityBackgroundTint(Color.black.opacity(0.3))
@@ -140,7 +140,7 @@ struct FocusBlockLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Text(context.state.endDate, style: .timer)
-                        .monospacedDigit().frame(width: 62).multilineTextAlignment(.trailing)
+                        .monospacedDigit().lineLimit(1).fixedSize()
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     Text(context.state.title).font(.headline).lineLimit(1)
@@ -149,7 +149,7 @@ struct FocusBlockLiveActivity: Widget {
                 Image(systemName: "bolt.fill").foregroundStyle(.yellow)
             } compactTrailing: {
                 Text(context.state.endDate, style: .timer)
-                    .monospacedDigit().frame(width: 44).multilineTextAlignment(.trailing)
+                    .monospacedDigit().lineLimit(1).fixedSize()
             } minimal: {
                 Image(systemName: "bolt.fill").foregroundStyle(.yellow)
             }
