@@ -25,7 +25,9 @@ else
   # Capture first (|| true), then parse via here-string so no pipeline can
   # SIGPIPE-fail under `set -o pipefail` before the empty-DEVICE check.
   DEVICE_LIST="$(xcrun devicectl list devices 2>/dev/null || true)"
-  DEVICE="$(awk 'tolower($0) ~ /available/ && tolower($0) ~ /iphone/ {
+  # Match iPhones that are reachable ("available (paired)" or "connected") and
+  # NOT "unavailable" (note: /available/ alone also matches "unavailable").
+  DEVICE="$(awk 'tolower($0) ~ /iphone/ && !/unavailable/ && (/available \(paired\)/ || /connected/) {
       for (i = 1; i <= NF; i++)
         if ($i ~ /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/) { print $i; exit }
     }' <<< "${DEVICE_LIST}")"
