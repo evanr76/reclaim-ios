@@ -1,4 +1,5 @@
 import SwiftUI
+import ReclaimKit
 
 /// Routes to onboarding when no token is configured, otherwise the task list.
 struct ContentView: View {
@@ -17,6 +18,8 @@ struct ContentView: View {
         .preferredColorScheme(AppAppearance(rawValue: appearanceRaw)?.colorScheme)
         .task {
             PhoneConnectivity.shared.start()
+            NotificationScheduler.configure()
+            await NotificationScheduler.requestAuthorization()
             if vm.isConfigured && vm.allTasks.isEmpty { await vm.loadTasks() }
         }
         .onChange(of: scenePhase) { _, phase in

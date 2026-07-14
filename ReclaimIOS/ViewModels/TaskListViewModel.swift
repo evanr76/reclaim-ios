@@ -58,6 +58,30 @@ final class TaskListViewModel {
     /// Task-capable time schemes (custom hours) for the edit pickers.
     private(set) var timeSchemes: [TimeScheme] = []
 
+    // Notification diff state.
+    private var prevAtRisk = Set<Int>()
+    private var prevUpNext = Set<Int>()
+    private var notifSeeded = false
+
+    private func notificationPrefs() -> NotificationPrefs {
+        let d = UserDefaults.standard
+        func flag(_ k: String) -> Bool { d.object(forKey: k) as? Bool ?? true }
+        return NotificationPrefs(
+            atRisk: flag("notifyAtRisk"), blockStarting: flag("notifyBlockStarting"),
+            upNext: flag("notifyUpNext"), digest: flag("notifyDigest"),
+            digestHour: d.object(forKey: "digestHour") as? Int ?? 8
+        )
+    }
+
+    private func syncNotifications() async {
+        let prefs = notificationPrefs()
+        guard prefs.anyEnabled else { return }
+        let (a, u) = await NotificationScheduler.sync(
+            tasks: allTasks, nextEvent: nextEvent, prefs: prefs,
+            previousAtRisk: prevAtRisk, previousUpNext: prevUpNext, seed: !notifSeeded)
+        prevAtRisk = a; prevUpNext = u; notifSeeded = true
+    }
+
     var filter: TaskFilter = .active
     var searchText: String = ""
     var sortOption: SortOption = .due {
@@ -245,6 +269,7 @@ final class TaskListViewModel {
                 timeSchemes = ((try? await client.fetchTimeSchemes()) ?? []).filter { $0.supportsTasks }
             }
             LiveActivityManager.sync(current: currentEvent)
+            await syncNotifications()
             publishSnapshot()
         } catch let apiError as ReclaimAPIError {
             // Always act on a dead session, even during a silent background refresh.
