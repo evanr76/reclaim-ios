@@ -124,7 +124,7 @@ struct FocusBlockLiveActivity: Widget {
                     (Text("until ") + Text(context.state.endDate, style: .time))
                         .font(.caption).foregroundStyle(.secondary)
                 }
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
                 Text(context.state.endDate, style: .timer)
                     .monospacedDigit().font(.title3.weight(.bold))
                     .lineLimit(1).fixedSize()
