@@ -117,19 +117,21 @@ private func liveActivityPriorityColor(_ raw: String?) -> Color {
 struct FocusBlockLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: FocusBlockAttributes.self) { context in
-            HStack(spacing: 12) {
-                Image(systemName: "bolt.fill").foregroundStyle(.yellow)
+            HStack(spacing: 10) {
+                Image(systemName: "bolt.fill").foregroundStyle(.yellow).font(.title3)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(context.state.title).font(.headline).lineLimit(1)
                     (Text("until ") + Text(context.state.endDate, style: .time))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Text(context.state.endDate, style: .timer)
-                    .monospacedDigit().font(.title3.weight(.bold))
-                    .lineLimit(1).fixedSize()
+                Text(timerInterval: Date()...max(context.state.endDate, Date().addingTimeInterval(1)),
+                     countsDown: true)
+                    .monospacedDigit().font(.title3.weight(.semibold))
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                    .frame(width: 84, alignment: .trailing)
             }
-            .padding()
+            .padding(.horizontal, 16).padding(.vertical, 12)
             .activityBackgroundTint(Color.black.opacity(0.3))
             .activitySystemActionForegroundColor(.white)
         } dynamicIsland: { context in
