@@ -16,3 +16,6 @@ xcuserdata/
 
 # Release artifacts (archive, ipa, logs)
 dist/
+
+# Added by ggshield
+.cache_ggshield
