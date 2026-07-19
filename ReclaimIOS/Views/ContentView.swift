@@ -17,6 +17,7 @@ struct ContentView: View {
         }
         .preferredColorScheme(AppAppearance(rawValue: appearanceRaw)?.colorScheme)
         .task {
+            LiveActivityManager.endStaleActivities()
             PhoneConnectivity.shared.start()
             NotificationScheduler.configure()
             await NotificationScheduler.requestAuthorization()

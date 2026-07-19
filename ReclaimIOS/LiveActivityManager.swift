@@ -6,8 +6,20 @@ import ReclaimKit
 /// scheduled moment. Called from the view model after each refresh.
 @MainActor
 enum LiveActivityManager {
+    /// End any Live Activity whose block has already ended. Uses the activity's
+    /// own `endDate`, so it works even if the app was suspended when the block
+    /// ended and the moment data is stale/unavailable. Call on app launch.
+    static func endStaleActivities() {
+        let now = Date()
+        for activity in Activity<FocusBlockAttributes>.activities where activity.content.state.endDate <= now {
+            Task { await activity.end(nil, dismissalPolicy: .immediate) }
+        }
+    }
+
     static func sync(current: MomentEvent?) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+
+        endStaleActivities()
 
         let active = current.flatMap { c -> (MomentEvent, Date)? in
             guard c.isActive(), let end = c.eventEnd else { return nil }
