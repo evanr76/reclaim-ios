@@ -85,6 +85,50 @@ start/stop + log-work + reindex-by-due before building Phase 3.
 - Verified in a watchOS simulator with the `#if DEBUG && targetEnvironment(simulator)`
   `RECLAIM_TOKEN` env fallback in WatchModel. Complication is deferred.
 
+## On-device intelligence (iOS 26+, Apple Foundation Models)
+
+All AI runs on-device via the Foundation Models framework — no server, no data
+leaves the device, and nothing touches the Reclaim API contract. Everything is
+gated on `ReclaimIntelligence.isAvailable` (iOS 26 + Apple Intelligence enabled +
+model downloaded) and degrades gracefully; the app is fully usable without it.
+
+- **AI task capture** (`Views/TaskCaptureView.swift`, `sparkles` toolbar button):
+  type/dictate/paste free text → `@Generable ParsedTask` via guided generation →
+  editable review → add. **Multi-turn refinement** reuses one `LanguageModelSession`
+  so "make it 2 hours" / "due Friday" keep context.
+- **Smart duration/priority** come from the same parse as *suggestions* — never
+  auto-applied. **Due dates are only pre-filled when the note explicitly states
+  one** (Reclaim schedules by priority; we never fabricate a deadline).
+- **Snap-to-task** (`Intelligence/VisionOCR.swift`, `CameraPicker.swift`): photo →
+  Vision `VNRecognizeTextRequest` → text → same parse pipeline.
+- **Daily briefing** (`Intelligence/DailyBriefing.swift`): generated in-app after
+  refresh (staleness-gated to ~3h/day), cached in the App Group, rendered by the
+  `ReclaimBriefingWidget`. The widget can't run the model (memory), so it only reads.
+- **Spotlight semantic search** (`Intelligence/ReclaimTaskEntity.swift`): tasks are
+  an `IndexedEntity`, re-indexed on every `publishSnapshot()` via `indexAppEntities`
+  (iOS 18+); the `EntityQuery` reads the App Group snapshot (no token needed).
+- Architecture note: all FoundationModels/Vision code lives in the **app target**,
+  never in `ReclaimKit` — the watch target compiles ReclaimKit sources directly and
+  watchOS has no FoundationModels. `SharedStore` only gained a plain `Briefing` cache.
+
+## Follow-ups: iOS 27 SDK (needs Xcode 27 beta; currently on Xcode 26.6 / SDK 26.5)
+
+- Replace Vision OCR with the model-native `OCRTool` + **direct image input** to the
+  model (drop the `VisionOCR`/`CameraPicker` plumbing).
+- Adopt **App Intents 2.0**: `LongRunningIntent` showing progress as a Live Activity;
+  **View Annotations** ("mark *that* one done"); streaming intent responses; `@UnionValue`.
+- Foundation Models: bigger on-device model, on-device fine-tuning, per-request tool
+  control via `GenerationOptions`.
+
+## Follow-ups: macOS 27 version (Foundation Models is macOS 26+)
+
+Port the same on-device features to the desktop app (`reclaim-desktop`):
+- AI task capture + multi-turn refinement (reuse the `@Generable` schemas & prompts).
+- Snap-to-task via **drag-drop / paste a screenshot** → Vision OCR → parse.
+- Daily briefing in the **menu-bar popover** and a macOS (Notification Center) widget.
+- macOS **Spotlight** indexing via the same `IndexedEntity`.
+- Keep the "suggestions only, never fabricate a due date" rule identical to iOS.
+
 ## Known gaps / backlog
 
 - Widget only reflects data as of the app's last refresh (App Group snapshot).
@@ -93,3 +137,5 @@ start/stop + log-work + reindex-by-due before building Phase 3.
 - App Group + device signing need a real team (automatic signing provisions it).
 - Verified against the API through the shared client (identical to macOS, which
   was probed live); iOS-specific UI verified in the simulator.
+- On-device AI verified to **compile & launch**; live model output depends on Apple
+  Intelligence being enabled on the device (graceful fallback otherwise).

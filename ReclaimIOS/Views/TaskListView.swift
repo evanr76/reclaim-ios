@@ -6,6 +6,7 @@ struct TaskListView: View {
     @State private var selection = Set<Int>()
     @State private var editMode: EditMode = .inactive
     @State private var showCreate = false
+    @State private var showCapture = false
     @State private var showSettings = false
     @State private var pendingDeleteIDs: [Int]?
     @State private var showReindexConfirm = false
@@ -39,6 +40,9 @@ struct TaskListView: View {
                 }
             }
             .sheet(isPresented: $showCreate) { TaskCreateView(vm: vm) }
+            .sheet(isPresented: $showCapture) {
+                if #available(iOS 26, *) { TaskCaptureView(vm: vm) }
+            }
             .sheet(isPresented: $showSettings) { SettingsView(vm: vm) }
             .confirmationDialog(
                 "Delete \(pendingDeleteIDs?.count ?? 0) task\((pendingDeleteIDs?.count ?? 0) == 1 ? "" : "s")?",
@@ -122,6 +126,12 @@ struct TaskListView: View {
         ToolbarItem(placement: .topBarLeading) {
             Button(editMode.isEditing ? "Done" : "Select") {
                 withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+            }
+        }
+        if #available(iOS 26, *) {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { showCapture = true } label: { Image(systemName: "sparkles") }
+                    .accessibilityLabel("AI Capture")
             }
         }
         ToolbarItem(placement: .topBarTrailing) {

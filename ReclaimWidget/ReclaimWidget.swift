@@ -167,6 +167,7 @@ struct FocusBlockLiveActivity: Widget {
 struct ReclaimWidgetBundle: WidgetBundle {
     var body: some Widget {
         ReclaimWidget()
+        ReclaimBriefingWidget()
         FocusBlockLiveActivity()
     }
 }

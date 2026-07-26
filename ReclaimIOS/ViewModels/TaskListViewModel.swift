@@ -285,10 +285,15 @@ final class TaskListViewModel {
         }
     }
 
-    /// Write the glance snapshot to the App Group and refresh the widget.
+    /// Write the glance snapshot to the App Group, refresh the widget, index
+    /// tasks for Spotlight, and (on capable devices) refresh the daily briefing.
     private func publishSnapshot() {
         SharedStore.saveSnapshot(glanceTasks.map { $0.snapshot })
         WidgetCenter.shared.reloadAllTimelines()
+        TaskSpotlight.index(allTasks)
+        if #available(iOS 26, *) {
+            Task { await refreshBriefingIfStale() }
+        }
     }
 
     // MARK: - Mutations
