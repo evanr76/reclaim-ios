@@ -125,11 +125,19 @@ struct FocusBlockLiveActivity: Widget {
                         .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Text(timerInterval: Date()...max(context.state.endDate, Date().addingTimeInterval(1)),
-                     countsDown: true)
-                    .monospacedDigit().font(.title3.weight(.semibold))
-                    .lineLimit(1).minimumScaleFactor(0.6)
-                    .frame(width: 84, alignment: .trailing)
+                Group {
+                    if context.isStale {
+                        Label("Ended", systemImage: "checkmark.circle.fill")
+                            .labelStyle(.iconOnly)
+                            .font(.title3).foregroundStyle(.secondary)
+                    } else {
+                        Text(timerInterval: Date()...max(context.state.endDate, Date().addingTimeInterval(1)),
+                             countsDown: true)
+                            .monospacedDigit().font(.title3.weight(.semibold))
+                            .lineLimit(1).minimumScaleFactor(0.6)
+                    }
+                }
+                .frame(width: 84, alignment: .trailing)
             }
             .padding(.horizontal, 16).padding(.vertical, 12)
             .activityBackgroundTint(Color.black.opacity(0.3))
@@ -141,10 +149,14 @@ struct FocusBlockLiveActivity: Widget {
                         .font(.caption).foregroundStyle(.yellow)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(context.state.endDate, style: .timer)
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .multilineTextAlignment(.trailing)
+                    if context.isStale {
+                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.secondary)
+                    } else {
+                        Text(context.state.endDate, style: .timer)
+                            .monospacedDigit()
+                            .lineLimit(1)
+                            .multilineTextAlignment(.trailing)
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     Text(context.state.title).font(.headline).lineLimit(1)
@@ -152,12 +164,17 @@ struct FocusBlockLiveActivity: Widget {
             } compactLeading: {
                 Image(systemName: "bolt.fill").foregroundStyle(.yellow)
             } compactTrailing: {
-                Text(timerInterval: Date()...max(context.state.endDate, Date().addingTimeInterval(1)),
-                     countsDown: true)
-                    .monospacedDigit()
-                    .frame(maxWidth: 44)
+                if context.isStale {
+                    Image(systemName: "checkmark").foregroundStyle(.secondary)
+                } else {
+                    Text(timerInterval: Date()...max(context.state.endDate, Date().addingTimeInterval(1)),
+                         countsDown: true)
+                        .monospacedDigit()
+                        .frame(maxWidth: 44)
+                }
             } minimal: {
-                Image(systemName: "bolt.fill").foregroundStyle(.yellow)
+                Image(systemName: context.isStale ? "checkmark" : "bolt.fill")
+                    .foregroundStyle(context.isStale ? Color.secondary : Color.yellow)
             }
         }
     }

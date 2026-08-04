@@ -24,8 +24,13 @@ struct ContentView: View {
             if vm.isConfigured && vm.allTasks.isEmpty { await vm.loadTasks() }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active && vm.isConfigured {
-                Task { await vm.loadTasks(silent: true) }
+            if phase == .active {
+                // Clear a finished block's activity immediately on foreground,
+                // independent of the (possibly slow/failing) network refresh.
+                LiveActivityManager.endStaleActivities()
+                if vm.isConfigured {
+                    Task { await vm.loadTasks(silent: true) }
+                }
             }
         }
     }
