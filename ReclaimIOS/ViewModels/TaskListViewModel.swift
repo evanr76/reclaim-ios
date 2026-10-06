@@ -99,15 +99,28 @@ final class TaskListViewModel {
     private let pathMonitor = NWPathMonitor()
     private var refreshTask: Task<Void, Never>?
 
+    /// Which task backend to talk to, read from the setting (default v1).
+    static func storedMode() -> ReclaimMode {
+        ReclaimMode(rawValue: UserDefaults.standard.string(forKey: "reclaimMode") ?? "v1") ?? .v1
+    }
+
+    /// Rebuild the client for the current mode and reload. Call after the toggle flips.
+    func applyMode() async {
+        guard let token = KeychainStore.readToken() else { return }
+        client = ReclaimAPIClient(token: token, mode: Self.storedMode())
+        user = nil
+        await loadTasks()
+    }
+
     init() {
         if let token = KeychainStore.readToken() {
-            client = ReclaimAPIClient(token: token)
+            client = ReclaimAPIClient(token: token, mode: Self.storedMode())
             isConfigured = true
         }
         #if DEBUG && targetEnvironment(simulator)
         // Simulator-only convenience: inject a token via the RECLAIM_TOKEN env var.
         if client == nil, let env = ProcessInfo.processInfo.environment["RECLAIM_TOKEN"], !env.isEmpty {
-            client = ReclaimAPIClient(token: env)
+            client = ReclaimAPIClient(token: env, mode: Self.storedMode())
             isConfigured = true
         }
         #endif
@@ -218,7 +231,7 @@ final class TaskListViewModel {
     func saveToken(_ raw: String) async {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { errorMessage = "Please enter your Reclaim API key."; return }
-        let candidate = ReclaimAPIClient(token: trimmed)
+        let candidate = ReclaimAPIClient(token: trimmed, mode: Self.storedMode())
         isBusy = true
         defer { isBusy = false }
         do {
