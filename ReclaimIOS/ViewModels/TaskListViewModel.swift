@@ -26,7 +26,7 @@ enum TaskFilter: String, CaseIterable, Identifiable {
 enum SortOption: String, CaseIterable, Identifiable {
     case due = "Due Date"
     case priority = "Priority"
-    case created = "Created"
+    case id = "ID"
     case title = "Title"
 
     var id: String { rawValue }
@@ -34,7 +34,7 @@ enum SortOption: String, CaseIterable, Identifiable {
         switch self {
         case .due: return "calendar"
         case .priority: return "flag"
-        case .created: return "clock"
+        case .id: return "number"
         case .title: return "textformat"
         }
     }
@@ -179,8 +179,8 @@ final class TaskListViewModel {
                 let pa = $0.priorityEnum ?? .p3, pb = $1.priorityEnum ?? .p3
                 return pa != pb ? pa < pb : $0.sortDue < $1.sortDue
             }
-        case .created:
-            base = tasks.sorted { $0.sortCreated != $1.sortCreated ? $0.sortCreated < $1.sortCreated : $0.id < $1.id }
+        case .id:
+            base = tasks.sorted { $0.id < $1.id }
         case .title:
             base = tasks.sorted { $0.displayTitle.localizedCaseInsensitiveCompare($1.displayTitle) == .orderedAscending }
         }
